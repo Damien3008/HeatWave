@@ -1,1 +1,4 @@
 # numerical-solution-of-the-heat-equation
+
+During our mathematics classes, we had to solve the heat equation in one and two dimensions. I worked with two other students on it. In this file you can find two python codes, some video examples and a PDF. The PDF contains a theoretical approach of the heat equation and an analysis of the numerical schema from the point of view of its consistency, stability in the sense of Von Neumann-Fourier and convergence. Secondly, you can find two python codes: "Resolution_equation_heat" which contains a class "EqHeat" with a constructor and some methods, and "Resolution_equation_heat_main" which is the only code that you can edit in order to change the initial conditions. You can find some examples in it.
+Finally, there are some videos of the heat equation in two dimensions with several initial conditions.
