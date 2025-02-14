@@ -1,6 +1,8 @@
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import argparse
+import os
 from src.solvers import FiniteDifferenceSolver, FiniteElementSolver, SpectralSolver
 from src.utils.config import load_config, get_solver, get_initial_condition
 
@@ -32,8 +34,17 @@ def create_heat_animation(u, x, y, t, config):
     # Create mesh grid
     X, Y = jnp.meshgrid(x, y)
     
+    # Create descriptive title
+    solver_type = config['solver_type'].upper()
+    ic_type = config['initial_condition']['type'].capitalize()
+    bc_type = config['boundary_conditions']['type'].capitalize()
+    gamma = config['physics']['gamma']
+    
+    title = f'Heat Equation Solution ({solver_type} Method)\n'
+    title += f'Initial: {ic_type}, BC: {bc_type}, γ={gamma:.3f}'
+    
     # Set title
-    fig.suptitle('Temperature evolution on a flat plate')
+    fig.suptitle(title, fontsize=12)
     
     # Select frames to animate
     frame_indices = range(0, len(t), anim_config['skip_frames'])
@@ -135,13 +146,94 @@ def plot_static_solution(u, x, y, t, config):
         ax2.set_ylabel('y')
         ax2.set_title(f'Contour plot at t = {t[-1]:.2f}')
     
-    plt.suptitle('Temperature evolution on a flat plate')
+    # Create descriptive title
+    solver_type = config['solver_type'].upper()
+    ic_type = config['initial_condition']['type'].capitalize()
+    bc_type = config['boundary_conditions']['type'].capitalize()
+    gamma = config['physics']['gamma']
+    
+    title = f'Heat Equation Solution ({solver_type} Method)\n'
+    title += f'Initial: {ic_type}, BC: {bc_type}, γ={gamma:.6f}, t={t[-1]:.2f}'
+    
+    plt.suptitle(title, fontsize=12)
     plt.tight_layout()
     plt.show()
 
+def get_boundary_conditions(config):
+    """Create boundary conditions from config."""
+    bc_config = config['boundary_conditions']
+    bc_type = bc_config['type'].lower()
+    
+    if bc_type == "dirichlet":
+        value = bc_config['dirichlet']['value']
+        return {
+            'type': 'dirichlet',
+            'function': lambda t: value
+        }
+    
+    elif bc_type == "neumann":
+        flux = bc_config['neumann']['flux']
+        return {
+            'type': 'neumann',
+            'function': lambda t: flux
+        }
+    
+    elif bc_type == "periodic":
+        return {
+            'type': 'periodic'
+        }
+    
+    elif bc_type == "mixed":
+        mixed_bcs = bc_config['mixed']
+        return {
+            'type': 'mixed',
+            'left': mixed_bcs['left'],
+            'right': mixed_bcs['right'],
+            'top': mixed_bcs['top'],
+            'bottom': mixed_bcs['bottom']
+        }
+    
+    elif bc_type == "time_dependent":
+        td_config = bc_config['time_dependent']
+        if td_config['function'] == 'sin':
+            A, f = td_config['amplitude'], td_config['frequency']
+            return {
+                'type': 'dirichlet',
+                'function': lambda t: A * jnp.sin(2 * jnp.pi * f * t)
+            }
+        elif td_config['function'] == 'cos':
+            A, f = td_config['amplitude'], td_config['frequency']
+            return {
+                'type': 'dirichlet',
+                'function': lambda t: A * jnp.cos(2 * jnp.pi * f * t)
+            }
+        elif td_config['function'] == 'linear':
+            A = td_config['amplitude']
+            return {
+                'type': 'dirichlet',
+                'function': lambda t: A * t
+            }
+    
+    raise ValueError(f"Unknown boundary condition type: {bc_type}")
+
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='Solve 2D heat equation with various methods.')
+    parser.add_argument('--config', type=str, default='config/solver_config.yaml',
+                      help='Path to configuration file')
+    return parser.parse_args()
+
 def main():
+    # Parse command line arguments
+    args = parse_args()
+    
+    # Check if config file exists
+    if not os.path.exists(args.config):
+        raise FileNotFoundError(f"Config file not found: {args.config}")
+    
     # Load configuration
-    config = load_config("solver_config.yaml")
+    config = load_config(args.config)
+    print(f"Using configuration from: {args.config}")
     
     # Available solvers
     solvers = {
@@ -152,14 +244,11 @@ def main():
     
     # Initialize solver from config
     solver = get_solver(config, solvers)
+    print(f"Using solver: {config['solver_type']}")
     
-    # Get initial condition from config
+    # Get initial and boundary conditions
     initial_condition = get_initial_condition(config)
-    
-    # Define boundary conditions
-    boundary_conditions = {
-        'dirichlet': lambda t: 0.0  # Zero temperature at boundaries
-    }
+    boundary_conditions = get_boundary_conditions(config)
     
     # Solve the equation
     print("Solving heat equation...")

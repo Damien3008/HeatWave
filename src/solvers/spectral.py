@@ -35,8 +35,8 @@ class SpectralSolver(PDESolver):
         # Set initial condition
         u = u.at[0].set(initial_condition(X, Y))
         
-        # Get boundary condition function
-        bc_func = boundary_conditions['dirichlet']
+        # Get boundary condition type
+        bc_type = boundary_conditions['type']
         
         # Compute wave numbers
         kx = 2 * jnp.pi * jnp.fft.fftfreq(self.Mx, self.dx)
@@ -50,21 +50,38 @@ class SpectralSolver(PDESolver):
         # Initial FFT
         u_hat = jnp.fft.fft2(u[0])
         
-        # Time stepping
-        for n in range(self.Nt-1):
-            # Spectral step
-            u_hat = u_hat * factor
-            u_new = jnp.real(jnp.fft.ifft2(u_hat))
-            
-            # Apply boundary conditions
-            bc_val = bc_func(t[n+1])
-            u_new = u_new.at[0, :].set(bc_val)    # Bottom boundary
-            u_new = u_new.at[-1, :].set(bc_val)   # Top boundary
-            u_new = u_new.at[:, 0].set(bc_val)    # Left boundary
-            u_new = u_new.at[:, -1].set(bc_val)   # Right boundary
-            
-            # Update solution and FFT
-            u = u.at[n+1].set(u_new)
-            u_hat = jnp.fft.fft2(u_new)
+        if bc_type == 'periodic':
+            # Use standard FFT
+            pass
+        elif bc_type == 'neumann':
+            # Use cosine transform
+            pass
+        elif bc_type == 'mixed':
+            # Handle mixed boundary conditions
+            for n in range(self.Nt-1):
+                # Apply different BCs to different boundaries
+                left_bc = boundary_conditions['left']
+                if left_bc['type'] == 'dirichlet':
+                    u = u.at[n, :, 0].set(left_bc['value'])
+                else:  # Neumann
+                    u = u.at[n, :, 0].set(u[n, :, 1] - left_bc['value'] * self.dx)
+        else:  # dirichlet
+            bc_func = boundary_conditions['function']
+            # Time stepping
+            for n in range(self.Nt-1):
+                # Spectral step
+                u_hat = u_hat * factor
+                u_new = jnp.real(jnp.fft.ifft2(u_hat))
+                
+                # Apply boundary conditions
+                bc_val = bc_func(t[n+1])
+                u_new = u_new.at[0, :].set(bc_val)    # Bottom boundary
+                u_new = u_new.at[-1, :].set(bc_val)   # Top boundary
+                u_new = u_new.at[:, 0].set(bc_val)    # Left boundary
+                u_new = u_new.at[:, -1].set(bc_val)   # Right boundary
+                
+                # Update solution and FFT
+                u = u.at[n+1].set(u_new)
+                u_hat = jnp.fft.fft2(u_new)
             
         return u, x, y, t 

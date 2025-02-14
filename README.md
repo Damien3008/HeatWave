@@ -1,15 +1,24 @@
 <div align="center">
 
-# HeatWave
-### A High-Performance Heat Equation Solver
+# HeatWave: A High-Performance 2D Heat Equation Solver with Multiple Numerical Methods
+### Leveraging JAX for GPU-Accelerated Heat Diffusion Simulations
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![JAX](https://img.shields.io/badge/JAX-0.4.13-green.svg)](https://github.com/google/jax)
 [![License: GNU](https://img.shields.io/badge/License-GNU-yellow.svg)](https://opensource.org/licenses/GNU)
 
-<img src="asset/heat_diffusion.gif" alt="Heat Equation Solution" width="800"/>
+<table>
+  <tr>
+    <td><img src="asset/heat_diffusion.gif" alt="Basic Heat Diffusion" width="400"/></td>
+    <td><img src="asset/periodic_heat_wave.gif" alt="Periodic Heat Wave" width="400"/></td>
+  </tr>
+  <tr>
+    <td><img src="asset/four_sources.gif" alt="Four Heat Sources" width="400"/></td>
+    <td><img src="asset/four_sources_periodic.gif" alt="Four Sources with Periodic BCs" width="400"/></td>
+  </tr>
+</table>
 
-*Evolution of temperature distribution on a flat plate using the spectral method*
+*Visualizations of heat equation solutions using Spectral, Finite Difference, and Finite Element methods*
 
 </div>
 
@@ -42,45 +51,77 @@ HeatWave is a high-performance numerical solver for heat equations, leveraging J
   - Exponential time differencing
   - Highly accurate for smooth solutions
 
-### Performance Optimizations
-- JAX-based implementation for GPU acceleration
-- Vectorized operations for optimal performance
-- Just-In-Time compilation
+### Boundary Conditions
+- **Dirichlet**: Fixed temperature values at boundaries
+- **Neumann**: Fixed heat flux at boundaries
+- **Mixed**: Different conditions for each boundary
+- **Time-dependent**: Oscillating or varying boundary conditions
 
-### Flexible Configuration
-- YAML-based configuration system
-- Customizable domain parameters
-- Multiple initial condition types
-- Adjustable boundary conditions
+### Example Configurations
 
-## 🧮 Mathematical Foundation
+1. **Heat Diffusion** (`config/solver_config.yaml`)
+   - Basic heat diffusion example
+   - Gaussian initial condition
+   - Dirichlet boundary conditions
+   ```yaml
+   initial_condition:
+     type: "gaussian"
+     amplitude: 1.0
+     center_x: 2.5
+     center_y: 2.5
+     width: 1.0
+   ```
 
-The 2D heat equation solved in this project is:
+2. **Periodic Heat Wave** (`config/periodic_heat_wave.yaml`)
+   - Time-dependent boundary conditions
+   - Sinusoidal temperature oscillation
+   - High-resolution grid (100x100)
+   ```yaml
+   boundary_conditions:
+     type: "time_dependent"
+     time_dependent:
+       enabled: true
+       function: "sin"
+       amplitude: 0.8
+       frequency: 0.5
+   ```
 
-<div align="center">
+3. **Four Heat Sources** (`config/four_sources.yaml`)
+   - Multiple Gaussian heat sources
+   - Symmetric configuration
+   - Zero-temperature boundaries
+   ```yaml
+   initial_condition:
+     type: "custom"
+     sources: [
+       {"x": 2.5, "y": 2.5, "amplitude": 1.0, "width": 0.8},
+       {"x": 2.5, "y": 7.5, "amplitude": 1.0, "width": 0.8},
+       {"x": 7.5, "y": 2.5, "amplitude": 1.0, "width": 0.8},
+       {"x": 7.5, "y": 7.5, "amplitude": 1.0, "width": 0.8}
+     ]
+   ```
 
-$\frac{\partial u}{\partial t} = \alpha \left(\frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2}\right)$
-
-</div>
-
-where:
-- $u(x, y, t)$ is the temperature
-- $\alpha$ is the thermal diffusivity
-- $t$ is time
-- $x, y$ are spatial coordinates
-
-<details>
-<summary>📚 Detailed Mathematical Theory</summary>
-
-A comprehensive mathematical analysis of the numerical methods used in this project can be found in `asset/theory_equation_heat_fr.pdf` (in French). This document covers:
-- Detailed derivation of finite difference schemes
-- Stability analysis of numerical methods
-- Spectral method implementation
-- Finite element formulation
-- Error analysis and convergence studies
-
-*Note: The theoretical documentation is available in French only.*
-</details>
+4. **Four Sources with Periodic Heat** (`config/four_sources_periodic.yaml`)
+   - Four oscillating heat sources
+   - Time-dependent periodic boundaries
+   - Dynamic wave-like patterns
+   ```yaml
+   initial_condition:
+     type: "custom"
+     sources: [
+       {"x": 2.5, "y": 2.5, "amplitude": 2.0, "width": 0.5},
+       {"x": 2.5, "y": 7.5, "amplitude": 2.0, "width": 0.5},
+       {"x": 7.5, "y": 2.5, "amplitude": 2.0, "width": 0.5},
+       {"x": 7.5, "y": 7.5, "amplitude": 2.0, "width": 0.5}
+     ]
+   boundary_conditions:
+     type: "time_dependent"
+     time_dependent:
+       enabled: true
+       function: "sin"
+       amplitude: 1.0
+       frequency: 2.0
+   ```
 
 ## 🚀 Getting Started
 
@@ -103,18 +144,18 @@ The `-e` flag installs the package in "editable" or "development" mode, which me
 - Package is installed in your Python environment with references to the source code
 
 ### Usage
-1. Configure simulation in `config/solver_config.yaml`:
+1. Choose a configuration file from the examples or create your own:
+```bash
+python examples/heat_equation_example.py --config config/<YOUR_CONFIG_FILE>.yaml
+```
+
+2. Modify parameters in the config file to experiment with different scenarios:
 ```yaml
 solver_type: "spectral"  # Options: spectral, finite_difference, finite_element
 domain:
   Lx: 5.0
   Ly: 5.0
   T: 5.0
-```
-
-2. Run the example:
-```bash
-python examples/heat_equation_example.py
 ```
 
 ## 📁 Project Structure
@@ -135,12 +176,6 @@ heatwave/
 └── asset/
     └── report.pdf            # Detailed project report
 ```
-
-## 🔄 Future Improvements
-- Implementation of adaptive time-stepping
-- Support for non-uniform grids
-- Extension to 3D problems
-- Integration of more boundary condition types
 
 ## 📜 License
 This project is licensed under the GNU License - see the [LICENSE](LICENSE) file for details.

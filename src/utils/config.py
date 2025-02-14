@@ -1,17 +1,30 @@
+import os
 import yaml
 import jax.numpy as jnp
-from .paths import get_config_path
 
 def load_config(config_path):
     """
     Load configuration from YAML file.
     
     Args:
-        config_path (str): Path to config file, relative to config directory
+        config_path: Path to configuration file (relative or absolute)
+    
+    Returns:
+        dict: Configuration dictionary
     """
-    full_path = get_config_path(config_path)
-    with open(full_path, 'r') as f:
-        return yaml.safe_load(f)
+    # If it's a relative path, make it relative to the current working directory
+    if not os.path.isabs(config_path):
+        config_path = os.path.join(os.getcwd(), config_path)
+    
+    # Check if file exists
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+    
+    # Load configuration
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    
+    return config
 
 def get_solver(config, solvers):
     """Get solver instance based on configuration."""
@@ -49,6 +62,18 @@ def get_initial_condition(config):
     elif ic_type == 'constant':
         def initial_condition(x, y):
             return ic_config['amplitude'] * jnp.ones_like(x)
+    elif ic_type == 'custom':
+        def initial_condition(x, y):
+            # Initialize with zeros
+            temperature = jnp.zeros_like(x)
+            # Add contribution from each source
+            for source in ic_config['sources']:
+                temperature += source['amplitude'] * jnp.exp(
+                    -(((x - source['x'])**2 + 
+                       (y - source['y'])**2) / 
+                      (2 * source['width']**2))
+                )
+            return temperature
     else:
         raise ValueError(f"Unknown initial condition type: {ic_type}")
     

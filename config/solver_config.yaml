@@ -1,5 +1,5 @@
 # Solver selection
-solver_type: "finite_element"  # Options: "spectral", "finite_difference", "finite_element"
+solver_type: "spectral"  # Options: "spectral", "finite_difference", "finite_element"
 
 # Domain parameters
 domain:
@@ -9,9 +9,9 @@ domain:
 
 # Discretization parameters
 discretization:
-  Mx: 10    # Number of points in x direction
-  My: 10    # Number of points in y direction
-  Nt: 100  # Number of time steps
+  Mx: 50    # Number of points in x direction
+  My: 50    # Number of points in y direction
+  Nt: 1000  # Number of time steps
 
 # Physical parameters
 physics:
@@ -25,9 +25,27 @@ initial_condition:
   center_y: 2.5    # Center of gaussian in y
   width: 1.0       # Width of gaussian
 
+# Boundary conditions
+boundary_conditions:
+  type: "dirichlet"  # Options: "dirichlet", "neumann", "periodic", "mixed"
+  dirichlet:
+    value: 0.0  # Fixed temperature at boundaries
+  neumann:
+    flux: 0.0   # Heat flux at boundaries (∂u/∂n = flux)
+  mixed:
+    left: {"type": "dirichlet", "value": 0.0}
+    right: {"type": "neumann", "value": 0.0}
+    top: {"type": "dirichlet", "value": 1.0}
+    bottom: {"type": "neumann", "value": 0.0}
+  time_dependent:
+    enabled: false
+    function: "linear"  # Options: "sin", "cos", "linear"
+    amplitude: 1.0
+    frequency: 0.1
+
 # Visualization settings
 visualization:
-  type: "static"  # Options: "animation", "static"
+  type: "animation"  # Options: "animation", "static"
   cmap: "hot"       # Colormap for plots
   figsize: [15, 6]  # Figure size [width, height]
   levels: 20        # Number of contour levels

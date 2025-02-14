@@ -34,8 +34,17 @@ class FiniteElementSolver(PDESolver):
         # Set initial condition
         u = u.at[0].set(initial_condition(X, Y))
         
-        # Get boundary condition function
-        bc_func = boundary_conditions['dirichlet']
+        # Get boundary condition type and function
+        bc_type = boundary_conditions['type']
+        if bc_type == 'dirichlet':
+            bc_func = boundary_conditions['function']
+        elif bc_type == 'neumann':
+            bc_func = boundary_conditions['function']
+        elif bc_type == 'mixed':
+            # Handle mixed boundary conditions
+            mixed_bcs = boundary_conditions
+        else:
+            raise ValueError(f"Boundary condition type {bc_type} not supported in FEM solver")
         
         # Create element matrices
         M_e = jnp.array([[4, 2, 2, 1],
@@ -78,10 +87,17 @@ class FiniteElementSolver(PDESolver):
             # Get current solution vector
             u_vec = u[n].reshape(-1)
             
-            # Apply boundary conditions
-            bc_val = bc_func(t[n])
-            boundary_nodes = self._get_boundary_nodes()
-            u_vec = u_vec.at[boundary_nodes].set(bc_val)
+            # Apply boundary conditions based on type
+            if bc_type == 'dirichlet':
+                bc_val = bc_func(t[n])
+                boundary_nodes = self._get_boundary_nodes()
+                u_vec = u_vec.at[boundary_nodes].set(bc_val)
+            elif bc_type == 'neumann':
+                # Apply Neumann BC using finite differences
+                flux = bc_func(t[n])
+                u_vec = self._apply_neumann_bc(u_vec, flux)
+            elif bc_type == 'mixed':
+                u_vec = self._apply_mixed_bc(u_vec, mixed_bcs, t[n])
             
             # Solve system
             u_new = A @ (M @ u_vec)
@@ -89,13 +105,14 @@ class FiniteElementSolver(PDESolver):
             # Reshape and store solution
             u = u.at[n+1].set(u_new.reshape(self.My, self.Mx))
             
-            # Apply boundary conditions for next step
-            bc_val = bc_func(t[n+1])
-            u = u.at[n+1, 0, :].set(bc_val)    # Bottom boundary
-            u = u.at[n+1, -1, :].set(bc_val)   # Top boundary
-            u = u.at[n+1, :, 0].set(bc_val)    # Left boundary
-            u = u.at[n+1, :, -1].set(bc_val)   # Right boundary
-        
+            # Reapply boundary conditions for next step
+            if bc_type == 'dirichlet':
+                bc_val = bc_func(t[n+1])
+                u = u.at[n+1, 0, :].set(bc_val)    # Bottom boundary
+                u = u.at[n+1, -1, :].set(bc_val)   # Top boundary
+                u = u.at[n+1, :, 0].set(bc_val)    # Left boundary
+                u = u.at[n+1, :, -1].set(bc_val)   # Right boundary
+            
         return u, x, y, t
     
     def _get_boundary_nodes(self):
@@ -105,6 +122,47 @@ class FiniteElementSolver(PDESolver):
         left = jnp.arange(self.My) * self.Mx
         right = jnp.arange(self.My) * self.Mx + (self.Mx - 1)
         return jnp.concatenate([bottom, top, left, right])
+    
+    def _apply_neumann_bc(self, u_vec, flux):
+        """Apply Neumann boundary conditions."""
+        u_mat = u_vec.reshape(self.My, self.Mx)
+        # Apply flux conditions using finite differences
+        u_mat = u_mat.at[0, 1:-1].set(u_mat[1, 1:-1] - flux * self.dy)  # Bottom
+        u_mat = u_mat.at[-1, 1:-1].set(u_mat[-2, 1:-1] + flux * self.dy)  # Top
+        u_mat = u_mat.at[1:-1, 0].set(u_mat[1:-1, 1] - flux * self.dx)  # Left
+        u_mat = u_mat.at[1:-1, -1].set(u_mat[1:-1, -2] + flux * self.dx)  # Right
+        return u_mat.reshape(-1)
+    
+    def _apply_mixed_bc(self, u_vec, mixed_bcs, t):
+        """Apply mixed boundary conditions."""
+        u_mat = u_vec.reshape(self.My, self.Mx)
+        
+        # Apply boundary conditions for each side
+        for side, bc in [('left', mixed_bcs['left']), 
+                        ('right', mixed_bcs['right']),
+                        ('top', mixed_bcs['top']), 
+                        ('bottom', mixed_bcs['bottom'])]:
+            if bc['type'] == 'dirichlet':
+                if side == 'left':
+                    u_mat = u_mat.at[:, 0].set(bc['value'])
+                elif side == 'right':
+                    u_mat = u_mat.at[:, -1].set(bc['value'])
+                elif side == 'top':
+                    u_mat = u_mat.at[-1, :].set(bc['value'])
+                else:  # bottom
+                    u_mat = u_mat.at[0, :].set(bc['value'])
+            else:  # neumann
+                flux = bc['value']
+                if side == 'left':
+                    u_mat = u_mat.at[1:-1, 0].set(u_mat[1:-1, 1] - flux * self.dx)
+                elif side == 'right':
+                    u_mat = u_mat.at[1:-1, -1].set(u_mat[1:-1, -2] + flux * self.dx)
+                elif side == 'top':
+                    u_mat = u_mat.at[-1, 1:-1].set(u_mat[-2, 1:-1] + flux * self.dy)
+                else:  # bottom
+                    u_mat = u_mat.at[0, 1:-1].set(u_mat[1, 1:-1] - flux * self.dy)
+        
+        return u_mat.reshape(-1)
 
     def solve(self, initial_condition, boundary_conditions):
         """Alias for solve_2d for backward compatibility"""

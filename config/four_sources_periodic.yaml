@@ -1,0 +1,44 @@
+solver_type: "spectral"  # Spectral method works well for periodic conditions
+domain:
+  Lx: 10.0
+  Ly: 10.0
+  T: 5.0   # Total simulation time
+
+discretization:
+  Mx: 80
+  My: 80
+  Nt: 1000
+
+physics:
+  gamma: 0.1  # Moderate diffusion coefficient
+
+initial_condition:
+  type: "custom"
+  sources: [
+    # Four oscillating heat sources at corners of a square
+    {"x": 2.5, "y": 2.5, "amplitude": 2.0, "width": 0.5},
+    {"x": 2.5, "y": 7.5, "amplitude": 2.0, "width": 0.5},
+    {"x": 7.5, "y": 2.5, "amplitude": 2.0, "width": 0.5},
+    {"x": 7.5, "y": 7.5, "amplitude": 2.0, "width": 0.5}
+  ]
+
+boundary_conditions:
+  type: "time_dependent"
+  time_dependent:
+    enabled: true
+    function: "sin"
+    amplitude: 1.0
+    frequency: 2.0  # Oscillation frequency
+
+visualization:
+  type: "animation"
+  cmap: "coolwarm"  # Good for showing temperature oscillations
+  figsize: [15, 6]
+  levels: 50
+  surface_plot: true
+  contour_plot: true
+  animation:
+    fps: 30
+    interval: 40
+    skip_frames: 2
+    filename: "four_sources_periodic.gif" 

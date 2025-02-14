@@ -1,0 +1,36 @@
+solver_type: "spectral"
+domain:
+  Lx: 10.0
+  Ly: 10.0
+  T: 15.0
+
+discretization:
+  Mx: 100
+  My: 100
+  Nt: 800
+
+physics:
+  gamma: 0.03
+
+initial_condition:
+  type: "sinusoidal"
+  amplitude: 1.0
+
+boundary_conditions:
+  type: "time_dependent"
+  time_dependent:
+    enabled: true
+    function: "sin"
+    amplitude: 0.8
+    frequency: 0.5
+
+visualization:
+  type: "animation"
+  cmap: "coolwarm"
+  figsize: [15, 6]
+  levels: 40
+  animation:
+    fps: 60
+    interval: 30
+    skip_frames: 3
+    filename: "periodic_heat_wave.gif" 
