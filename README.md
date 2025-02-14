@@ -7,14 +7,9 @@
 [![JAX](https://img.shields.io/badge/JAX-0.4.13-green.svg)](https://github.com/google/jax)
 [![License: GNU](https://img.shields.io/badge/License-GNU-yellow.svg)](https://opensource.org/licenses/GNU)
 
-<table>
-  <tr>
-    <td><img src="asset/periodic_heat_wave.gif" alt="Periodic Heat Wave" width="400"/></td>
-    <td><img src="asset/four_sources_periodic.gif" alt="Four Sources with Periodic BCs" width="400"/></td>
-  </tr>
-</table>
+<img src="asset/periodic_heat_wave.gif" alt="Periodic Heat Wave" width="800"/>
 
-*Left: Periodic heat wave with sinusoidal boundary conditions. Right: Four oscillating heat sources with dynamic wave patterns.*
+*Visualization of a periodic heat wave with sinusoidal boundary conditions using the spectral method*
 
 </div>
 
