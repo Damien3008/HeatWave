@@ -1,0 +1,42 @@
+# Solver selection
+solver_type: "finite_element"  # Options: "spectral", "finite_difference", "finite_element"
+
+# Domain parameters
+domain:
+  Lx: 5.0  # Length in x direction
+  Ly: 5.0  # Length in y direction
+  T: 30.0   # Total simulation time
+
+# Discretization parameters
+discretization:
+  Mx: 10    # Number of points in x direction
+  My: 10    # Number of points in y direction
+  Nt: 100  # Number of time steps
+
+# Physical parameters
+physics:
+  gamma: 0.1  # Increased diffusion coefficient for more visible changes
+
+# Initial and boundary conditions
+initial_condition:
+  type: "gaussian"  # Options: "gaussian", "sinusoidal", "constant"
+  amplitude: 1.0
+  center_x: 2.5    # Center of gaussian in x
+  center_y: 2.5    # Center of gaussian in y
+  width: 1.0       # Width of gaussian
+
+# Visualization settings
+visualization:
+  type: "static"  # Options: "animation", "static"
+  cmap: "hot"       # Colormap for plots
+  figsize: [15, 6]  # Figure size [width, height]
+  levels: 20        # Number of contour levels
+  surface_plot: true
+  contour_plot: true
+  
+  # Animation specific settings
+  animation:
+    fps: 40              # Frames per second
+    interval: 100        # Increased interval for smoother viewing
+    skip_frames: 10      # Increased to reduce file size
+    filename: "heat_diffusion.gif"

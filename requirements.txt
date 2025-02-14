@@ -1,0 +1,15 @@
+jax>=0.4.13
+jaxlib>=0.4.13
+numpy>=1.24.0
+matplotlib>=3.7.0
+scipy>=1.10.0
+pytest>=7.3.1
+tqdm>=4.65.0  # for saving animations
+pillow>=9.5.0  # for saving animations
+opencv-python>=4.7.0  # for video creation
+ipython>=8.12.0  # for interactive development
+jupyter>=1.0.0  # for notebook examples
+pyyaml  # for reading config files
+ffmpeg-python
+imageio
+imageio-ffmpeg 
