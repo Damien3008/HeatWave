@@ -9,16 +9,12 @@
 
 <table>
   <tr>
-    <td><img src="asset/heat_diffusion.gif" alt="Basic Heat Diffusion" width="400"/></td>
     <td><img src="asset/periodic_heat_wave.gif" alt="Periodic Heat Wave" width="400"/></td>
-  </tr>
-  <tr>
-    <td><img src="asset/four_sources.gif" alt="Four Heat Sources" width="400"/></td>
     <td><img src="asset/four_sources_periodic.gif" alt="Four Sources with Periodic BCs" width="400"/></td>
   </tr>
 </table>
 
-*Visualizations of heat equation solutions using Spectral, Finite Difference, and Finite Element methods*
+*Left: Periodic heat wave with sinusoidal boundary conditions. Right: Four oscillating heat sources with dynamic wave patterns.*
 
 </div>
 
